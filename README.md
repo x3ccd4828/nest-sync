@@ -4,7 +4,7 @@ A Rust application for downloading and syncing Google Nest camera events with pr
 
 ## Architecture
 
-This application mirrors the Python `google-nest-telegram-sync` implementation with the following modular structure:
+This application mirrors the Python [`google-nest-telegram-sync`](https://github.com/TamirMa/google-nest-telegram-sync) implementation with the following modular structure. For more details on the Google Nest Camera internal API, see [this Medium article](https://medium.com/@tamirmayer/google-nest-camera-internal-api-fdf9dc3ce167).
 
 ### Modules
 
@@ -36,10 +36,12 @@ This application mirrors the Python `google-nest-telegram-sync` implementation w
 - ✅ **Authentication**: Google OAuth token management with gRPC
 - ✅ **Device Discovery**: Automatic Nest camera detection via HomeGraph API
 - ✅ **Event Retrieval**: Fetch camera events with customizable time range
-- ✅ **Video Download**: Download MP4 clips for each event
-- ✅ **Metadata Embedding**: Use ffmpeg to embed creation timestamps
+- ✅ **Video Download**: Download MP4 clips for each event with concurrent download support
 - ✅ **File Timestamps**: Set filesystem timestamps to match event times
-- ✅ **Timezone Support**: Proper timezone handling (configurable, defaults to America/Vancouver)
+- ✅ **Timezone Support**: Proper timezone handling (defaults to America/Vancouver)
+- ✅ **Continuous Sync**: Run continuously with configurable check intervals
+- ✅ **Video Retention**: Automatic pruning of old videos based on retention policy
+- ✅ **Structured Logging**: Using `tracing` for observability with configurable log levels
 
 ## Dependencies
 
@@ -47,9 +49,12 @@ This application mirrors the Python `google-nest-telegram-sync` implementation w
 - **reqwest**: HTTP client for REST APIs
 - **tonic**: gRPC client framework
 - **prost**: Protocol Buffers implementation
-- **chrono**: Date and time handling
+- **chrono**: Date and time handling with timezone support
 - **quick-xml**: XML parsing for event manifests
 - **anyhow**: Error handling
+- **tracing**: Structured logging and diagnostics
+- **clap**: Command-line argument parsing
+- **walkdir**: Directory traversal for video pruning
 
 ## Configuration
 
@@ -63,24 +68,73 @@ GOOGLE_USERNAME=your_google_email@gmail.com
 ## Usage
 
 ```bash
-# Download events to current directory
+# Run continuously with default settings (check every 5 minutes)
 cargo run
 
-# Download events to specific directory
-cargo run /path/to/output
+# Run once and exit
+cargo run -- --once
+
+# Custom output directory and concurrency
+cargo run -- --output ~/nest-videos --concurrency 20
+
+# Custom check interval (in minutes)
+cargo run -- --check-interval 10
+
+# Configure video retention (in days, 0 = keep forever)
+cargo run -- --retention-days 30
+
+# Enable debug logging
+RUST_LOG=debug cargo run
+
+# Show all available options
+cargo run -- --help
+```
+
+### Command-line Options
+
+- `--output, -o <PATH>`: Output directory for downloaded videos (default: current directory)
+- `--concurrency, -c <NUM>`: Number of concurrent downloads (default: 10)
+- `--check-interval, -i <MIN>`: Minutes between event checks (default: 5)
+- `--once`: Run once and exit instead of continuous mode
+- `--retention-days <DAYS>`: Days to keep videos, 0 = keep forever (default: 60)
+- `--retention-hours`: Use hours instead of days for retention (testing only)
+- `--prune-interval <MIN>`: Minutes between pruning checks (default: 10)
+
+### Logging
+
+The application uses structured logging via `tracing`. Control log levels with the `RUST_LOG` environment variable:
+
+```bash
+# Info level (default)
+RUST_LOG=info cargo run
+
+# Debug level for verbose output
+RUST_LOG=debug cargo run
+
+# Only errors
+RUST_LOG=error cargo run
+
+# Module-specific logging
+RUST_LOG=nest_sync=debug,tonic=info cargo run
 ```
 
 ## Event Processing Flow
 
 1. Load environment variables from `.env`
-2. Authenticate with Google using master token
-3. Query HomeGraph API via gRPC to discover Nest camera devices
-4. For each camera:
-   - Fetch events from last 12 hours
-   - Download MP4 video for each event
-   - Embed creation timestamp in video metadata using ffmpeg
-   - Set file modification time to match event time
-   - Clean up temporary files
+2. Initialize tracing subscriber for structured logging
+3. Authenticate with Google using master token
+4. Query HomeGraph API via gRPC to discover Nest camera devices
+5. Enter main loop (or run once):
+   - **Event Check**: At configured intervals
+     - Fetch events from last 12 hours for each camera
+     - Download MP4 videos concurrently (respecting concurrency limit)
+     - Organize files in YYYY/MM/DD directory structure
+     - Set file modification time to match event time
+     - Skip already downloaded files
+   - **Video Pruning**: At configured intervals
+     - Walk directory tree to find all MP4 files
+     - Delete videos older than retention period
+     - Log pruning statistics
 
 ## Implementation Notes
 
@@ -101,9 +155,9 @@ Devices are filtered by:
 
 ## Requirements
 
-- Rust 1.70+
-- ffmpeg installed and available in PATH
+- Rust 1.70+ (edition 2024)
 - Valid Google master token
+- Sufficient disk space for video storage
 
 ## Comparison with Python Version
 

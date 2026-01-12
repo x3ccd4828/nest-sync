@@ -1,0 +1,36 @@
+[package]
+name = "nest-sync"
+version = "0.1.0"
+edition = "2024"
+authors = ["Your Name <you@example.com>"]
+description = "Download and sync Google Nest camera events"
+
+[dependencies]
+tokio = { version = "1.42", features = ["full"] }
+reqwest = { version = "0.13", features = ["json", "form", "query"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+chrono-tz = "0.10"
+anyhow = "1.0"
+thiserror = "2.0"
+dotenvy = "0.15"
+quick-xml = { version = "0.38", features = ["serialize"] }
+iso8601-duration = "0.2"
+filetime = "0.2"
+shellexpand = "3.1"
+clap = { version = "4", features = ["derive"] }
+tonic = { version = "0.14", features = [
+    "transport",
+    "tls-native-roots",
+    "tls-ring",
+] }
+tonic-prost = "0.14"
+prost = "0.14"
+rand = "0.9"
+walkdir = "2.5"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[build-dependencies]
+tonic-prost-build = "0.14"

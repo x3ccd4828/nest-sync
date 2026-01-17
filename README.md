@@ -160,7 +160,7 @@ Protocol Buffers definitions from `api.proto`. TLS is configured with native sys
 Devices are filtered by:
 
 - Trait: `action.devices.traits.CameraStream`
-- Hardware model contains: "Nest"
+- Hardware model contains: “Nest”
 
 ## Requirements
 

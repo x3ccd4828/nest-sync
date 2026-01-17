@@ -1,0 +1,57 @@
+name: Compile and Lint
+
+on:
+  push:
+    branches: ["**"]
+
+jobs:
+  formatting-checks:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image || 'rust:1.92.0' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Rust Formatting
+            check_type: rust
+            install_cmd: ""
+            run_cmd: cargo fmt --check
+
+          - name: TOML Formatting
+            check_type: toml
+            install_cmd: cargo install taplo-cli --locked
+            run_cmd: taplo fmt --check
+
+          - name: Markdown Formatting
+            image: node:lts-slim
+            check_type: md
+            install_cmd: npm install -g markdownlint-cli2 prettier
+            run_cmd: |
+              markdownlint-cli2 "**/*.md"
+              prettier --check "**/*.md"
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Dependencies
+        if: ${{ matrix.install_cmd != '' }}
+        run: ${{ matrix.install_cmd }}
+
+      - name: Run Formatting Check
+        run: ${{ matrix.run_cmd }}
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    container:
+      image: rust:1.92.0
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings

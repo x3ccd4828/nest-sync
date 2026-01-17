@@ -4,7 +4,9 @@ A Rust application for downloading and syncing Google Nest camera events with pr
 
 ## Architecture
 
-This application mirrors the Python [`google-nest-telegram-sync`](https://github.com/TamirMa/google-nest-telegram-sync) implementation with the following modular structure. For more details on the Google Nest Camera internal API, see [this Medium article](https://medium.com/@tamirmayer/google-nest-camera-internal-api-fdf9dc3ce167).
+This application mirrors the Python [`google-nest-telegram-sync`](https://github.com/TamirMa/google-nest-telegram-sync)
+implementation with the following modular structure. For more details on the Google Nest Camera internal API, see
+[this Medium article](https://medium.com/@tamirmayer/google-nest-camera-internal-api-fdf9dc3ce167).
 
 ### Modules
 
@@ -139,17 +141,24 @@ RUST_LOG=nest_sync=debug,tonic=info cargo run
 ## Implementation Notes
 
 ### OAuth Token Management
-The implementation uses the `gpsoauth` protocol to exchange the master token for service-specific access tokens. The OAuth flow:
+
+The implementation uses the `gpsoauth` protocol to exchange the master token for service-specific access tokens. The
+OAuth flow:
+
 1. Uses Android client credentials to authenticate
 2. Exchanges master token for access tokens (standard and Nest-specific)
 3. Caches tokens with automatic refresh after 1 hour
 4. Generates a random Android ID for each session
 
 ### gRPC Communication
-The app uses tonic to communicate with Google's Home Foyer API (`googlehomefoyer-pa.googleapis.com:443`) using the Protocol Buffers definitions from `api.proto`. TLS is configured with native system roots for certificate validation.
+
+The app uses tonic to communicate with Google's Home Foyer API (`googlehomefoyer-pa.googleapis.com:443`) using the
+Protocol Buffers definitions from `api.proto`. TLS is configured with native system roots for certificate validation.
 
 ### Device Filtering
+
 Devices are filtered by:
+
 - Trait: `action.devices.traits.CameraStream`
 - Hardware model contains: "Nest"
 
@@ -161,14 +170,14 @@ Devices are filtered by:
 
 ## Comparison with Python Version
 
-| Feature | Python | Rust |
-|---------|--------|------|
-| Async/Await | ✅ asyncio | ✅ tokio |
-| gRPC | ✅ grpcio | ✅ tonic |
-| XML Parsing | ✅ ElementTree | ✅ quick-xml |
-| HTTP Client | ✅ requests | ✅ reqwest |
-| Error Handling | Exceptions | Result<T, E> |
-| Type Safety | Runtime | Compile-time |
+| Feature        | Python         | Rust         |
+| -------------- | -------------- | ------------ |
+| Async/Await    | ✅ asyncio     | ✅ tokio     |
+| gRPC           | ✅ grpcio      | ✅ tonic     |
+| XML Parsing    | ✅ ElementTree | ✅ quick-xml |
+| HTTP Client    | ✅ requests    | ✅ reqwest   |
+| Error Handling | Exceptions     | Result<T, E> |
+| Type Safety    | Runtime        | Compile-time |
 
 ## License
 

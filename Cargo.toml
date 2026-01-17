@@ -14,7 +14,7 @@ dotenvy = "0.15"
 filetime = "0.2"
 iso8601-duration = "0.2"
 prost = "0.14"
-quick-xml = { version = "0.38", features = ["serialize"] }
+quick-xml = { version = "0.39", features = ["serialize"] }
 rand = "0.9"
 reqwest = { version = "0.13", features = ["form", "json", "query"] }
 serde = { version = "1.0", features = ["derive"] }

@@ -53,5 +53,8 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
+      - name: Install Dependencies
+        run: apt update && apt install protobuf-compiler -y
+
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings

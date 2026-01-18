@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
       # Login against a Docker registry except on PR
       - name: Log into registry ${{ env.REGISTRY }}

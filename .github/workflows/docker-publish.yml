@@ -23,7 +23,7 @@ jobs:
 
       # 1. Add QEMU (Required for emulating ARM on x86 runners)
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       # 2. Add Docker Buildx (Required for multi-arch builds)
       - name: Set up Docker Buildx

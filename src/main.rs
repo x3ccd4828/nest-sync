@@ -22,6 +22,61 @@ use tracing::{debug, error, info};
 
 const EVENT_HISTORY_DURATION_MINUTES: i64 = 12 * 60;
 
+struct AppState {
+    google_connection: GoogleConnection,
+    nest_camera_devices: Vec<(String, String)>,
+    google_master_token: String,
+    google_username: String,
+    output_path: PathBuf,
+}
+
+async fn initialize(args: &Args) -> Option<AppState> {
+    let google_master_token = match std::env::var("GOOGLE_MASTER_TOKEN") {
+        Ok(token) => token,
+        Err(e) => {
+            error!(error = %e, "GOOGLE_MASTER_TOKEN environment variable not set");
+            return None;
+        }
+    };
+    let google_username = match std::env::var("GOOGLE_USERNAME") {
+        Ok(username) => username,
+        Err(e) => {
+            error!(error = %e, "GOOGLE_USERNAME environment variable not set");
+            return None;
+        }
+    };
+
+    let output_path = shellexpand::tilde(&args.output.to_string_lossy()).to_string();
+    let output_path = PathBuf::from(output_path);
+    if let Err(e) = fs::create_dir_all(&output_path) {
+        error!(error = %e, "Failed to create output directory");
+        return None;
+    }
+
+    let mut google_connection =
+        GoogleConnection::new(google_master_token.clone(), google_username.clone());
+
+    let nest_camera_devices = match google_connection.get_nest_camera_devices().await {
+        Ok(devices) => {
+            let device_count = devices.len();
+            info!(device_count, "Found camera devices");
+            devices
+        }
+        Err(e) => {
+            error!(error = %e, "Failed to get camera devices");
+            return None;
+        }
+    };
+
+    Some(AppState {
+        google_connection,
+        nest_camera_devices,
+        google_master_token,
+        google_username,
+        output_path,
+    })
+}
+
 async fn prune_old_videos(
     output_path: &Path,
     retention_period: u64,
@@ -243,7 +298,7 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() {
     // Initialize tracing subscriber
     tracing_subscriber::fmt()
         .with_env_filter(
@@ -262,21 +317,7 @@ async fn main() -> Result<()> {
 
     let args = Args::parse();
 
-    let google_master_token = std::env::var("GOOGLE_MASTER_TOKEN")
-        .context("GOOGLE_MASTER_TOKEN environment variable not set")?;
-    let google_username =
-        std::env::var("GOOGLE_USERNAME").context("GOOGLE_USERNAME environment variable not set")?;
-
-    let output_path = shellexpand::tilde(&args.output.to_string_lossy()).to_string();
-    let output_path = PathBuf::from(output_path);
-    fs::create_dir_all(&output_path).context("Failed to create output directory")?;
-
-    let mut google_connection =
-        GoogleConnection::new(google_master_token.clone(), google_username.clone());
-
-    let nest_camera_devices = google_connection.get_nest_camera_devices().await?;
-    let device_count = nest_camera_devices.len();
-    info!(device_count, "Found camera devices");
+    let mut app_state = None;
 
     let semaphore = Arc::new(Semaphore::new(args.concurrency));
     let mut check_events_interval = time::interval(Duration::from_secs(args.check_interval * 60));
@@ -310,22 +351,28 @@ async fn main() -> Result<()> {
     loop {
         tokio::select! {
             _ = check_events_interval.tick() => {
-                if let Err(e) = check_and_download_events(
-                    &mut google_connection,
-                    &nest_camera_devices,
-                    &output_path,
-                    &semaphore,
-                    &google_master_token,
-                    &google_username,
-                    args.check_interval,
-                ).await {
-                    error!(error = %e, "Error checking events");
+                if app_state.is_none() {
+                    app_state = initialize(&args).await;
                 }
+
+                if let Some(ref mut state) = app_state
+                    && let Err(e) = check_and_download_events(
+                        &mut state.google_connection,
+                        &state.nest_camera_devices,
+                        &state.output_path,
+                        &semaphore,
+                        &state.google_master_token,
+                        &state.google_username,
+                        args.check_interval,
+                    ).await {
+                        error!(error = %e, "Error checking events");
+                    }
             }
             _ = prune_interval.tick() => {
-                if let Err(e) = prune_old_videos(&output_path, args.retention_days, args.retention_hours).await {
-                    error!(error = %e, "Error pruning videos");
-                }
+                if let Some(ref state) = app_state
+                    && let Err(e) = prune_old_videos(&state.output_path, args.retention_days, args.retention_hours).await {
+                        error!(error = %e, "Error pruning videos");
+                    }
             }
             // Add more branches here as needed
             // _ = some_signal => { ... }
@@ -335,6 +382,4 @@ async fn main() -> Result<()> {
             break;
         }
     }
-
-    Ok(())
 }

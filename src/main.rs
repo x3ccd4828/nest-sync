@@ -252,6 +252,12 @@ async fn main() -> Result<()> {
         )
         .init();
 
+    info!(
+        "Application: {}, Version: {}",
+        env!("CARGO_PKG_NAME"),
+        env!("CARGO_PKG_VERSION")
+    );
+
     dotenvy::dotenv().ok();
 
     let args = Args::parse();

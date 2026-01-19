@@ -2,23 +2,23 @@ mod google_auth;
 mod models;
 mod nest_api;
 
+use std::{
+    fs,
+    io::Write,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::{Duration, SystemTime},
+};
+
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use chrono_tz::America::Vancouver;
 use clap::Parser;
 use filetime::FileTime;
-use std::fs;
-use std::io::Write;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use std::time::{Duration, SystemTime};
-use tokio::sync::Semaphore;
-use tokio::task::JoinSet;
-use tokio::time;
-use tracing::{debug, error, info};
-
 use google_auth::GoogleConnection;
 use nest_api::NestDevice;
+use tokio::{sync::Semaphore, task::JoinSet, time};
+use tracing::{debug, error, info};
 
 const EVENT_HISTORY_DURATION_MINUTES: i64 = 12 * 60;
 

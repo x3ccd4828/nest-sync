@@ -1,9 +1,8 @@
-use crate::google_auth::GoogleConnection;
-use crate::models::CameraEvent;
 use anyhow::Result;
 use chrono::{DateTime, Duration, Utc};
-use quick_xml::Reader;
-use quick_xml::events::Event;
+use quick_xml::{Reader, events::Event};
+
+use crate::{google_auth::GoogleConnection, models::CameraEvent};
 
 const EVENTS_URI: &str = "https://nest-camera-frontend.googleapis.com/dashmanifest/namespace/nest-phoenix-prod/device/{device_id}";
 const DOWNLOAD_VIDEO_URI: &str = "https://nest-camera-frontend.googleapis.com/mp4clip/namespace/nest-phoenix-prod/device/{device_id}";

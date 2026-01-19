@@ -1,17 +1,23 @@
+use std::{
+    collections::HashMap,
+    time::{Duration, SystemTime},
+};
+
 use anyhow::{Context, Result};
 use reqwest::Client;
-use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
-use tonic::Request;
-use tonic::metadata::MetadataValue;
-use tonic::transport::{Channel, ClientTlsConfig};
+use tonic::{
+    Request,
+    metadata::MetadataValue,
+    transport::{Channel, ClientTlsConfig},
+};
 
 pub mod foyer {
     tonic::include_proto!("google.internal.home.foyer.v1");
 }
 
-use foyer::structures_service_client::StructuresServiceClient;
-use foyer::{GetHomeGraphRequest, GetHomeGraphResponse};
+use foyer::{
+    GetHomeGraphRequest, GetHomeGraphResponse, structures_service_client::StructuresServiceClient,
+};
 
 const ACCESS_TOKEN_DURATION: Duration = Duration::from_secs(3600);
 const GOOGLE_HOME_FOYER_API: &str = "https://googlehomefoyer-pa.googleapis.com";

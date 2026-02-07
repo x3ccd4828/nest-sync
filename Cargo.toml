@@ -1,5 +1,5 @@
 [package]
-authors = ["Your Name <you@example.com>"]
+authors = ["Cristian Filipescu"]
 description = "Download and sync Google Nest camera events"
 edition = "2024"
 license = "GPL-3.0-or-later"

@@ -6,5 +6,5 @@
   "platformAutomerge": true,
   "automerge": true,
   "prHourlyLimit": 0,
-  "concurrentPRsLimit": 0
+  "prConcurrentLimit": 0
 }

@@ -1,5 +1,8 @@
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
+use tracing::warn;
+
+const MAX_EVENT_DURATION_SECS: i64 = 10 * 60;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CameraEvent {
@@ -45,7 +48,19 @@ impl CameraEvent {
         let duration_parsed = iso8601_duration::Duration::parse(duration_str)
             .map_err(|e| anyhow::anyhow!("Failed to parse duration: {:?}", e))?;
         let duration_secs = duration_parsed.num_seconds().unwrap_or(0.0) as i64;
-        let duration = Duration::seconds(duration_secs.min(60)); // Cap at 1 minute
+        let capped_duration_secs = duration_secs.min(MAX_EVENT_DURATION_SECS);
+
+        if duration_secs > MAX_EVENT_DURATION_SECS {
+            warn!(
+                %device_id,
+                %program_date_time,
+                duration_secs,
+                capped_duration_secs,
+                "Event duration exceeded cap; clipping download window"
+            );
+        }
+
+        let duration = Duration::seconds(capped_duration_secs);
 
         Ok(Self::new(device_id, start_time, duration))
     }

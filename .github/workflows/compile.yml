@@ -46,7 +46,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     container:
-      image: rust:1.92.0
+      image: rust:1.93.1
     steps:
       - uses: actions/checkout@v6
 

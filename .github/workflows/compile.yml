@@ -33,7 +33,7 @@ jobs:
               prettier --check "**/*.md"
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Dependencies
         if: ${{ matrix.install_cmd != '' }}
@@ -48,7 +48,7 @@ jobs:
     container:
       image: rust:1.96.0
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2

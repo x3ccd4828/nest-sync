@@ -64,17 +64,17 @@ impl NestDevice {
         loop {
             match reader.read_event_into(&mut buf) {
                 Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) => {
-                    if e.name().as_ref() == b"Period" {
+                    if e.name().as_ref() == "Period" {
                         let mut program_date_time = None;
                         let mut duration = None;
 
                         for attr in e.attributes().flatten() {
                             let key = attr.key.as_ref();
-                            let value = String::from_utf8_lossy(&attr.value).to_string();
+                            let value = attr.value.into_owned();
 
-                            if key == b"programDateTime" {
+                            if key == "programDateTime" {
                                 program_date_time = Some(value);
-                            } else if key == b"duration" {
+                            } else if key == "duration" {
                                 duration = Some(value);
                             }
                         }
